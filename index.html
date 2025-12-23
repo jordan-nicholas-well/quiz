@@ -16,7 +16,7 @@
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   
   <!-- QRCode -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
   <!-- Questions (external file) -->
   <script src="questions.js"></script>
@@ -330,6 +330,7 @@
       margin: 20px 0;
     }
 
+    .qr-container img { display: block; }
     .qr-container canvas { display: block; }
 
     .join-url {
@@ -1399,7 +1400,7 @@
               <p>Scan the QR code or enter the code:</p>
               <div class="room-code">${gameState.roomCode}</div>
               <div class="qr-container">
-                <canvas id="qr-code"></canvas>
+                <div id="qr-code"></div>
               </div>
               <p class="join-url">${joinUrl}</p>
             </div>
@@ -1731,8 +1732,8 @@
     }
 
     function generateQRCode() {
-      const canvas = document.getElementById('qr-code');
-      if (!canvas) return;
+      const container = document.getElementById('qr-code');
+      if (!container) return;
       if (!gameState.roomCode) return;
       if (typeof QRCode === 'undefined') {
         // Library not loaded yet, retry after a short delay
@@ -1742,17 +1743,17 @@
 
       const joinUrl = `${window.location.href.split('?')[0]}?room=${gameState.roomCode}`;
 
-      // Use requestAnimationFrame to ensure canvas is in DOM and rendered
-      requestAnimationFrame(() => {
-        QRCode.toCanvas(canvas, joinUrl, {
-          width: 180,
-          margin: 1,
-          color: { dark: '#165B33', light: '#ffffff' }
-        }, function(error) {
-          if (error) {
-            console.error('QR Code generation error:', error);
-          }
-        });
+      // Clear any existing QR code
+      container.innerHTML = '';
+
+      // Generate new QR code using qrcodejs library
+      new QRCode(container, {
+        text: joinUrl,
+        width: 180,
+        height: 180,
+        colorDark: '#165B33',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
       });
     }
 
