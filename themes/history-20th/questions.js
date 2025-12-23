@@ -1,4 +1,4 @@
-const QUESTIONS = [
+var QUESTIONS = [
   // World Wars (50 questions)
   { category: "World Wars", question: "In what year did World War I begin?", answers: ["1912", "1914", "1916", "1918"], correct: 1 },
   { category: "World Wars", question: "What was the name of the alliance between Germany, Austria-Hungary, and Italy before WWI?", answers: ["The Axis Powers", "The Triple Alliance", "The Central Powers", "The Triple Entente"], correct: 1 },

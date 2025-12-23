@@ -1638,7 +1638,8 @@
       const ui = theme?.ui || {};
       const players = Object.values(gameState.players);
       const playerCount = players.length;
-      const joinUrl = window.location.href.split('?')[0];
+      const baseUrl = window.location.href.split('?')[0];
+      const joinUrl = `${baseUrl}?theme=${theme?.id || ''}&room=${gameState.roomCode}`;
 
       return `
         <div class="screen">
@@ -2017,7 +2018,8 @@
         return;
       }
 
-      const joinUrl = `${window.location.href.split('?')[0]}?room=${gameState.roomCode}`;
+      const themeId = gameState.selectedTheme?.id || '';
+      const joinUrl = `${window.location.href.split('?')[0]}?theme=${themeId}&room=${gameState.roomCode}`;
       container.innerHTML = '';
 
       const theme = gameState.selectedTheme;

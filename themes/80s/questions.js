@@ -1,4 +1,4 @@
-const QUESTIONS = [
+var QUESTIONS = [
   // MUSIC - MTV Era, Pop Stars, Rock, New Wave
   { category: "Music", question: "What year did MTV first launch?", answers: ["1979", "1981", "1983", "1985"], correct: 1 },
   { category: "Music", question: "What was the first music video played on MTV?", answers: ["Video Killed the Radio Star", "Thriller", "Like a Virgin", "Sweet Child O' Mine"], correct: 0 },

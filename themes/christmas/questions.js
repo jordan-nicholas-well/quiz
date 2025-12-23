@@ -11,7 +11,7 @@
  * }
  */
 
-const QUESTIONS = [
+var QUESTIONS = [
   // === MOVIES (60 questions) ===
   { category: "Movies", question: "In 'Home Alone', where are the McCallisters going on vacation when they leave Kevin behind?", answers: ["Paris", "London", "Rome", "Miami"], correct: 0 },
   { category: "Movies", question: "What is the name of the main character in 'The Polar Express'?", answers: ["The Boy (unnamed)", "Chris", "Billy", "Tom"], correct: 0 },
