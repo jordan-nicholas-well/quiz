@@ -1407,7 +1407,17 @@
     function selectQuestions() {
       const questions = getThemeQuestions();
       const shuffled = [...questions].sort(() => Math.random() - 0.5);
-      gameState.selectedQuestions = shuffled.slice(0, 10);
+      // Shuffle answers for each question and update correct index
+      gameState.selectedQuestions = shuffled.slice(0, 10).map(q => {
+        const correctAnswer = q.answers[q.correct];
+        const shuffledAnswers = [...q.answers].sort(() => Math.random() - 0.5);
+        const newCorrectIndex = shuffledAnswers.indexOf(correctAnswer);
+        return {
+          ...q,
+          answers: shuffledAnswers,
+          correct: newCorrectIndex
+        };
+      });
     }
 
     function startGame() {
