@@ -506,7 +506,7 @@
 
     .controller-btn .answer-text {
       flex: 1;
-      font-size: clamp(1rem, 4vw, 1.35rem);
+      font-size: clamp(1.25rem, 5vw, 1.6rem);
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -554,7 +554,7 @@
     }
 
     .controller-waiting p {
-      font-size: clamp(1.2rem, 5vw, 1.6rem);
+      font-size: clamp(1.4rem, 6vw, 1.8rem);
       color: var(--color-text-muted);
     }
 
@@ -579,13 +579,13 @@
     }
 
     .controller-submitted h3 {
-      font-size: clamp(2rem, 8vw, 3rem);
+      font-size: clamp(2.2rem, 9vw, 3.5rem);
       color: var(--color-text);
       margin-bottom: 15px;
     }
 
     .controller-submitted p {
-      font-size: clamp(1.2rem, 5vw, 1.6rem);
+      font-size: clamp(1.5rem, 6vw, 1.9rem);
       color: var(--color-text-muted);
     }
 
@@ -615,7 +615,7 @@
     .controller-feedback .result-text.wrong { color: var(--color-wrong); }
 
     .controller-feedback .correct-answer {
-      font-size: clamp(1.2rem, 5vw, 1.8rem);
+      font-size: clamp(1.5rem, 6vw, 2rem);
       color: var(--color-text);
       margin-bottom: 10px;
       padding: 0 10px;
@@ -626,7 +626,7 @@
     }
 
     .controller-feedback .next-hint {
-      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      font-size: clamp(1.3rem, 5vw, 1.7rem);
       color: var(--color-text-muted);
       margin-top: 30px;
     }
@@ -660,7 +660,7 @@
       flex-direction: column;
       gap: 10px;
       font-weight: 600;
-      font-size: clamp(1.1rem, 4vw, 1.4rem);
+      font-size: clamp(1.3rem, 5vw, 1.6rem);
     }
 
     .controller-join .input-field {
@@ -705,7 +705,7 @@
     }
 
     .controller-final .look-up {
-      font-size: clamp(1.2rem, 5vw, 1.6rem);
+      font-size: clamp(1.4rem, 6vw, 1.8rem);
       color: var(--color-text-muted);
     }
 
@@ -1733,13 +1733,26 @@
     function generateQRCode() {
       const canvas = document.getElementById('qr-code');
       if (!canvas) return;
-      
+      if (!gameState.roomCode) return;
+      if (typeof QRCode === 'undefined') {
+        // Library not loaded yet, retry after a short delay
+        setTimeout(generateQRCode, 100);
+        return;
+      }
+
       const joinUrl = `${window.location.href.split('?')[0]}?room=${gameState.roomCode}`;
-      
-      QRCode.toCanvas(canvas, joinUrl, {
-        width: 180,
-        margin: 0,
-        color: { dark: '#165B33', light: '#ffffff' }
+
+      // Use requestAnimationFrame to ensure canvas is in DOM and rendered
+      requestAnimationFrame(() => {
+        QRCode.toCanvas(canvas, joinUrl, {
+          width: 180,
+          margin: 1,
+          color: { dark: '#165B33', light: '#ffffff' }
+        }, function(error) {
+          if (error) {
+            console.error('QR Code generation error:', error);
+          }
+        });
       });
     }
 
