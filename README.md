@@ -6,7 +6,7 @@ A real-time multiplayer trivia game where players use their phones as controller
 
 ### Option 1: Run Directly (GitHub Pages or any web server)
 
-1. **Host the file**: Upload `index.html` to GitHub Pages, Netlify, or any static web hosting
+1. **Host the files**: Upload `index.html` AND `questions.js` to GitHub Pages, Netlify, or any static web hosting
 2. **Start hosting**: Open the game on a TV or computer and click "Host Game"
 3. **Players join**: Players scan the QR code or enter the room code on their phones
 4. **Play!**: Once everyone has joined, click "Start Game"
@@ -45,13 +45,16 @@ A real-time multiplayer trivia game where players use their phones as controller
 
 ```
 trivia-game/
-├── index.html          # Main game file (everything in one file)
+├── index.html          # Main game application
+├── questions.js        # Question pool (250 Christmas questions) ⬅️ REQUIRED
 ├── README.md           # This file
 ├── themes/
 │   └── christmas.js    # Example theme configuration
 └── questions/
-    └── christmas.js    # Example question pool format
+    └── christmas.js    # Question format documentation
 ```
+
+**Important**: Both `index.html` and `questions.js` must be in the same folder for the game to work!
 
 ## 🎨 Theme Format
 
