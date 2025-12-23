@@ -1,4 +1,4 @@
-const QUESTIONS = [
+var QUESTIONS = [
   // Animated Classics
   { category: "Animated Classics", question: "What year was Snow White and the Seven Dwarfs released?", answers: ["1935", "1937", "1940", "1942"], correct: 1 },
   { category: "Animated Classics", question: "What is the name of Sleeping Beauty's prince?", answers: ["Prince Charming", "Prince Philip", "Prince Eric", "Prince Adam"], correct: 1 },

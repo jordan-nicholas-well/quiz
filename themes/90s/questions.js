@@ -1,4 +1,4 @@
-const QUESTIONS = [
+var QUESTIONS = [
   // Music - Grunge & Alternative
   { category: "Music", question: "Which Nirvana album featured the hit song 'Smells Like Teen Spirit'?", answers: ["In Utero", "Nevermind", "Bleach", "MTV Unplugged"], correct: 1 },
   { category: "Music", question: "What year did Kurt Cobain die?", answers: ["1992", "1993", "1994", "1995"], correct: 2 },

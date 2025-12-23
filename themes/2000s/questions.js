@@ -1,4 +1,4 @@
-const QUESTIONS = [
+var QUESTIONS = [
   // Music Questions (40 questions)
   { category: "Music", question: "What year did Apple release the first iPod?", answers: ["1999", "2001", "2003", "2005"], correct: 1 },
   { category: "Music", question: "Which My Chemical Romance album featured the song 'Welcome to the Black Parade'?", answers: ["Three Cheers for Sweet Revenge", "The Black Parade", "Danger Days", "I Brought You My Bullets"], correct: 1 },

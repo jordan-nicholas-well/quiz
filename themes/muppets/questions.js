@@ -1,4 +1,4 @@
-const QUESTIONS = [
+var QUESTIONS = [
   // The Muppet Show
   { category: "The Muppet Show", question: "What year did The Muppet Show first premiere?", answers: ["1976", "1974", "1978", "1980"], correct: 0 },
   { category: "The Muppet Show", question: "Who was the host of The Muppet Show?", answers: ["Kermit the Frog", "Fozzie Bear", "Gonzo", "Miss Piggy"], correct: 0 },
