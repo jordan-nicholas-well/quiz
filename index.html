@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Christmas Trivia Party</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- PeerJS -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  
+  <!-- QRCode -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  
+  <style>
+    /* ========================================
+       THEME CONFIGURATION
+       ======================================== */
+    :root {
+      --color-primary: #c41e3a;
+      --color-primary-dark: #9a162d;
+      --color-secondary: #165B33;
+      --color-secondary-dark: #0f4025;
+      --color-accent: #FFD700;
+      --color-accent-glow: rgba(255, 215, 0, 0.4);
+      --color-background: #0a120a;
+      --color-surface: #132613;
+      --color-surface-light: #1a3a1a;
+      --color-text: #ffffff;
+      --color-text-muted: #8cb88c;
+      --color-correct: #22c55e;
+      --color-wrong: #ef4444;
+      
+      --font-display: 'Mountains of Christmas', cursive;
+      --font-body: 'Nunito', sans-serif;
+      
+      --shadow-glow: 0 0 30px rgba(255, 215, 0, 0.3);
+      --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ========================================
+       RESET & BASE
+       ======================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-background);
+      color: var(--color-text);
+      line-height: 1.5;
+    }
+
+    /* ========================================
+       BACKGROUND & DECORATIONS
+       ======================================== */
+    #app {
+      min-height: 100vh;
+      background: 
+        radial-gradient(ellipse at top, var(--color-secondary-dark) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom, var(--color-primary-dark) 0%, transparent 50%),
+        var(--color-background);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Snowfall */
+    .snowflake {
+      position: fixed;
+      top: -10px;
+      color: #fff;
+      font-size: 1em;
+      text-shadow: 0 0 5px #fff;
+      animation: fall linear infinite;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.7;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-10px) rotate(0deg);
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+      }
+    }
+
+    /* Christmas Lights */
+    .lights-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      display: flex;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .light-bulb {
+      width: 12px;
+      height: 18px;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      margin: 8px 15px 0;
+      animation: glow 1s ease-in-out infinite alternate;
+    }
+
+    .light-bulb::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      background: #333;
+      border-radius: 2px;
+    }
+
+    .light-bulb:nth-child(5n+1) { background: #ff6b6b; box-shadow: 0 0 15px #ff6b6b; animation-delay: 0s; }
+    .light-bulb:nth-child(5n+2) { background: #4ecdc4; box-shadow: 0 0 15px #4ecdc4; animation-delay: 0.2s; }
+    .light-bulb:nth-child(5n+3) { background: #ffe66d; box-shadow: 0 0 15px #ffe66d; animation-delay: 0.4s; }
+    .light-bulb:nth-child(5n+4) { background: #95e1d3; box-shadow: 0 0 15px #95e1d3; animation-delay: 0.6s; }
+    .light-bulb:nth-child(5n+5) { background: #f38181; box-shadow: 0 0 15px #f38181; animation-delay: 0.8s; }
+
+    @keyframes glow {
+      0% { opacity: 0.6; filter: brightness(0.8); }
+      100% { opacity: 1; filter: brightness(1.2); }
+    }
+
+    /* Wire for lights */
+    .lights-wire {
+      position: fixed;
+      top: 12px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #222;
+      z-index: 99;
+    }
+
+    /* ========================================
+       LAYOUT CONTAINERS
+       ======================================== */
+    .screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      padding-top: 50px;
+    }
+
+    .card {
+      background: var(--color-surface);
+      border: 2px solid var(--color-secondary);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: var(--shadow-card);
+      max-width: 100%;
+    }
+
+    /* ========================================
+       TYPOGRAPHY
+       ======================================== */
+    h1, h2, h3 {
+      font-family: var(--font-display);
+      color: var(--color-accent);
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: clamp(1.8rem, 5vw, 3rem);
+    }
+
+    .subtitle {
+      color: var(--color-text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+    }
+
+    /* ========================================
+       BUTTONS
+       ======================================== */
+    .btn {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: white;
+      box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(196, 30, 58, 0.6);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
+      color: white;
+      box-shadow: 0 4px 15px rgba(22, 91, 51, 0.4);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(22, 91, 51, 0.6);
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--color-accent), #e6c200);
+      color: #1a1a1a;
+      box-shadow: 0 4px 15px var(--color-accent-glow);
+    }
+
+    .btn-large {
+      padding: 20px 60px;
+      font-size: 1.3rem;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* ========================================
+       INPUTS
+       ======================================== */
+    .input-field {
+      font-family: var(--font-body);
+      font-size: 1.2rem;
+      padding: 15px 20px;
+      border: 2px solid var(--color-secondary);
+      border-radius: 10px;
+      background: var(--color-surface-light);
+      color: var(--color-text);
+      width: 100%;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 15px var(--color-accent-glow);
+    }
+
+    .input-field::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    /* ========================================
+       MODE SELECTION SCREEN
+       ======================================== */
+    .mode-buttons {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .mode-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      padding: 30px 40px;
+      background: var(--color-surface);
+      border: 3px solid var(--color-secondary);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 200px;
+    }
+
+    .mode-btn:hover {
+      border-color: var(--color-accent);
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .mode-btn svg {
+      width: 60px;
+      height: 60px;
+      fill: var(--color-accent);
+    }
+
+    .mode-btn span {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    .mode-btn small {
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* ========================================
+       HOST LOBBY
+       ======================================== */
+    .lobby-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .lobby-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .join-info {
+      text-align: center;
+    }
+
+    .room-code {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      color: var(--color-accent);
+      letter-spacing: 10px;
+      text-shadow: 0 0 20px var(--color-accent-glow);
+      margin: 20px 0;
+    }
+
+    .qr-container {
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      display: inline-block;
+      margin: 20px 0;
+    }
+
+    .qr-container canvas {
+      display: block;
+    }
+
+    .join-url {
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+      word-break: break-all;
+    }
+
+    .players-section h3 {
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .players-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 12px 20px;
+      background: var(--color-surface-light);
+      border-radius: 10px;
+      border-left: 4px solid var(--color-accent);
+    }
+
+    .player-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .player-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .waiting-text {
+      color: var(--color-text-muted);
+      font-style: italic;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .start-section {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .player-count {
+      color: var(--color-text-muted);
+      margin-bottom: 15px;
+    }
+
+    /* ========================================
+       CONTROLLER JOIN SCREEN
+       ======================================== */
+    .join-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 350px;
+    }
+
+    .join-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    /* ========================================
+       GAME SCREEN - HOST
+       ======================================== */
+    .game-header {
+      position: fixed;
+      top: 40px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: rgba(10, 18, 10, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 50;
+    }
+
+    .question-counter {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--color-accent);
+    }
+
+    .timer {
+      font-family: var(--font-body);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--color-text);
+      background: var(--color-primary);
+      padding: 10px 25px;
+      border-radius: 50px;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .timer.warning {
+      animation: pulse 0.5s ease-in-out infinite;
+      background: var(--color-wrong);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .category-badge {
+      background: var(--color-secondary);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .question-container {
+      text-align: center;
+      max-width: 900px;
+      width: 100%;
+      padding-top: 100px;
+    }
+
+    .question-text {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 40px;
+      line-height: 1.4;
+    }
+
+    .answers-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 600px) {
+      .answers-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .answer-option {
+      padding: 25px 30px;
+      background: var(--color-surface);
+      border: 3px solid var(--color-secondary);
+      border-radius: 15px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .answer-option .letter {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--color-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .answer-option.correct {
+      border-color: var(--color-correct);
+      background: rgba(34, 197, 94, 0.2);
+    }
+
+    .answer-option.correct .letter {
+      background: var(--color-correct);
+    }
+
+    .answer-option.wrong {
+      border-color: var(--color-wrong);
+      opacity: 0.6;
+    }
+
+    /* ========================================
+       CONTROLLER GAME SCREEN
+       ======================================== */
+    .controller-screen {
+      padding: 20px;
+      padding-top: 50px;
+    }
+
+    .controller-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .controller-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .controller-answers {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .controller-btn {
+      padding: 25px 20px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: white;
+    }
+
+    .controller-btn:nth-child(1) { background: #c41e3a; }
+    .controller-btn:nth-child(2) { background: #165B33; }
+    .controller-btn:nth-child(3) { background: #0077be; }
+    .controller-btn:nth-child(4) { background: #9333ea; }
+
+    .controller-btn:active {
+      transform: scale(0.98);
+    }
+
+    .controller-btn.selected {
+      box-shadow: 0 0 0 4px var(--color-accent), 0 0 20px var(--color-accent-glow);
+    }
+
+    .controller-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .controller-btn .letter {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .answer-feedback {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .answer-feedback.correct {
+      color: var(--color-correct);
+    }
+
+    .answer-feedback.wrong {
+      color: var(--color-wrong);
+    }
+
+    .waiting-for-question {
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: 1.2rem;
+    }
+
+    .waiting-for-question .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--color-surface-light);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ========================================
+       RESULTS SCREEN
+       ======================================== */
+    .results-container {
+      text-align: center;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .correct-answer-display {
+      margin: 30px 0;
+      padding: 20px 30px;
+      background: rgba(34, 197, 94, 0.2);
+      border: 2px solid var(--color-correct);
+      border-radius: 15px;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .who-got-it {
+      margin: 20px 0;
+    }
+
+    .who-got-it h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: var(--color-text-muted);
+    }
+
+    .correct-players {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .correct-player {
+      background: var(--color-correct);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .correct-player .points {
+      opacity: 0.8;
+      margin-left: 5px;
+    }
+
+    /* ========================================
+       LEADERBOARD
+       ======================================== */
+    .leaderboard {
+      margin: 30px 0;
+      width: 100%;
+    }
+
+    .leaderboard h3 {
+      margin-bottom: 15px;
+    }
+
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 12px 20px;
+      background: var(--color-surface-light);
+      border-radius: 10px;
+    }
+
+    .leaderboard-item.top-1 {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #1a1a1a;
+    }
+
+    .leaderboard-item.top-2 {
+      background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+      color: #1a1a1a;
+    }
+
+    .leaderboard-item.top-3 {
+      background: linear-gradient(135deg, #CD7F32, #B87333);
+      color: #1a1a1a;
+    }
+
+    .rank {
+      font-weight: 800;
+      font-size: 1.2rem;
+      width: 30px;
+    }
+
+    .leaderboard-name {
+      flex: 1;
+      font-weight: 600;
+    }
+
+    .leaderboard-score {
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    /* ========================================
+       FINAL RESULTS
+       ======================================== */
+    .final-results {
+      text-align: center;
+    }
+
+    .winner-celebration {
+      margin: 30px 0;
+    }
+
+    .trophy {
+      font-size: 5rem;
+      animation: bounce 1s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .winner-name {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      color: var(--color-accent);
+      margin: 20px 0;
+    }
+
+    .winner-score {
+      font-size: 1.5rem;
+      color: var(--color-text-muted);
+    }
+
+    .play-again-section {
+      margin-top: 40px;
+    }
+
+    /* ========================================
+       CONNECTION STATUS
+       ======================================== */
+    .connection-status {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      z-index: 100;
+    }
+
+    .connection-status.connected {
+      background: var(--color-correct);
+      color: white;
+    }
+
+    .connection-status.disconnected {
+      background: var(--color-wrong);
+      color: white;
+    }
+
+    .connection-status.connecting {
+      background: var(--color-accent);
+      color: #1a1a1a;
+    }
+
+    /* ========================================
+       UTILITIES
+       ======================================== */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-20 {
+      margin-top: 20px;
+    }
+
+    .mb-20 {
+      margin-bottom: 20px;
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--color-wrong);
+      color: var(--color-wrong);
+      padding: 15px 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Christmas Lights -->
+    <div class="lights-wire"></div>
+    <div class="lights-container" id="lights"></div>
+    
+    <!-- Snowflakes will be added dynamically -->
+    
+    <!-- Screen content rendered by JS -->
+    <div id="content"></div>
+    
+    <!-- Connection Status -->
+    <div id="connection-status" class="connection-status hidden"></div>
+  </div>
+
+  <script>
+    // ========================================
+    // THEME CONFIGURATION
+    // ========================================
+    const THEME = {
+      name: "Christmas",
+      decorations: {
+        snowfall: true,
+        snowflakeCount: 50,
+        lights: true,
+        lightCount: 20
+      }
+    };
+
+    // ========================================
+    // QUESTION POOL - 250 CHRISTMAS QUESTIONS
+    // ========================================
+    const QUESTIONS = [
+      // === MOVIES (60 questions) ===
+      { category: "Movies", question: "In 'Home Alone', where are the McCallisters going on vacation when they leave Kevin behind?", answers: ["Paris", "London", "Rome", "Miami"], correct: 0 },
+      { category: "Movies", question: "What is the name of the main character in 'The Polar Express'?", answers: ["The Boy (unnamed)", "Chris", "Billy", "Tom"], correct: 0 },
+      { category: "Movies", question: "In 'Elf', what is Buddy's favorite food combination?", answers: ["Spaghetti with maple syrup", "Pizza with chocolate", "Pancakes with ketchup", "Cereal with orange juice"], correct: 0 },
+      { category: "Movies", question: "What Christmas movie features the line 'You'll shoot your eye out'?", answers: ["A Christmas Story", "Home Alone", "Elf", "The Santa Clause"], correct: 0 },
+      { category: "Movies", question: "In 'It's a Wonderful Life', what is the name of the angel who helps George Bailey?", answers: ["Clarence", "Gabriel", "Michael", "Harold"], correct: 0 },
+      { category: "Movies", question: "What gift does Ralphie desperately want in 'A Christmas Story'?", answers: ["Red Ryder BB Gun", "Bicycle", "Sled", "Train set"], correct: 0 },
+      { category: "Movies", question: "In 'The Nightmare Before Christmas', what is Jack Skellington's title?", answers: ["The Pumpkin King", "The Skeleton King", "The Halloween King", "The Fright King"], correct: 0 },
+      { category: "Movies", question: "What store does Buddy work at in 'Elf'?", answers: ["Gimbels", "Macy's", "Bloomingdale's", "Saks Fifth Avenue"], correct: 0 },
+      { category: "Movies", question: "In 'The Santa Clause', what happens when Scott Calvin puts on the Santa suit?", answers: ["He becomes Santa", "He gains weight", "His hair turns white", "All of the above"], correct: 3 },
+      { category: "Movies", question: "What is the name of the Grinch's dog?", answers: ["Max", "Rex", "Buddy", "Spot"], correct: 0 },
+      { category: "Movies", question: "In 'National Lampoon's Christmas Vacation', what animal causes chaos in the house?", answers: ["Squirrel", "Raccoon", "Cat", "Bird"], correct: 0 },
+      { category: "Movies", question: "What is the name of Scrooge's deceased business partner in 'A Christmas Carol'?", answers: ["Jacob Marley", "Bob Cratchit", "Fred Scrooge", "Peter Marley"], correct: 0 },
+      { category: "Movies", question: "In 'Love Actually', what song does the Prime Minister dance to?", answers: ["Jump (For My Love)", "Jingle Bells", "Last Christmas", "All I Want for Christmas"], correct: 0 },
+      { category: "Movies", question: "What does Kevin use to torture the burglars in 'Home Alone'?", answers: ["All of these", "Paint cans", "Blowtorch", "Ornaments"], correct: 0 },
+      { category: "Movies", question: "In 'Die Hard', what building is taken over by terrorists?", answers: ["Nakatomi Plaza", "Empire State Building", "Sears Tower", "World Trade Center"], correct: 0 },
+      { category: "Movies", question: "What year was 'It's a Wonderful Life' released?", answers: ["1946", "1954", "1939", "1962"], correct: 0 },
+      { category: "Movies", question: "In 'Miracle on 34th Street', what store hires Kris Kringle?", answers: ["Macy's", "Gimbels", "Sears", "JCPenney"], correct: 0 },
+      { category: "Movies", question: "What is the name of the villain in 'The Nightmare Before Christmas'?", answers: ["Oogie Boogie", "Dr. Finkelstein", "The Mayor", "Lock"], correct: 0 },
+      { category: "Movies", question: "In 'Scrooged', Bill Murray plays what kind of executive?", answers: ["Television", "Advertising", "Film", "Radio"], correct: 0 },
+      { category: "Movies", question: "What Christmas movie stars Tim Allen as a man who accidentally kills Santa?", answers: ["The Santa Clause", "Christmas with the Kranks", "Jingle All the Way", "Fred Claus"], correct: 0 },
+      { category: "Movies", question: "In 'A Charlie Brown Christmas', what does Charlie Brown buy for the school play?", answers: ["A small tree", "Decorations", "Costumes", "A star"], correct: 0 },
+      { category: "Movies", question: "What animated film features the song 'When Christmas Comes to Town'?", answers: ["The Polar Express", "A Christmas Carol", "The Snowman", "Arthur Christmas"], correct: 0 },
+      { category: "Movies", question: "In 'Gremlins', what are the three rules for caring for a Mogwai?", answers: ["No bright light, no water, no food after midnight", "No sunlight, no salt, no loud noises", "No heat, no cold, no feeding", "No music, no dancing, no playing"], correct: 0 },
+      { category: "Movies", question: "What is the name of the conductor in 'The Polar Express'?", answers: ["The Conductor (unnamed)", "Mr. C", "Chris Kringle", "Nick"], correct: 0 },
+      { category: "Movies", question: "In 'How the Grinch Stole Christmas' (2000), who plays the Grinch?", answers: ["Jim Carrey", "Mike Myers", "Adam Sandler", "Will Ferrell"], correct: 0 },
+      { category: "Movies", question: "What does Ralphie's father win in 'A Christmas Story'?", answers: ["A leg lamp", "A turkey", "A car", "A vacation"], correct: 0 },
+      { category: "Movies", question: "In 'Elf', what does Buddy think is the best way to spread Christmas cheer?", answers: ["Singing loud for all to hear", "Giving gifts", "Decorating trees", "Baking cookies"], correct: 0 },
+      { category: "Movies", question: "What Christmas film stars Arnold Schwarzenegger trying to buy a Turbo Man toy?", answers: ["Jingle All the Way", "Kindergarten Cop", "Last Action Hero", "True Lies"], correct: 0 },
+      { category: "Movies", question: "In 'The Holiday', which two actresses swap homes?", answers: ["Cameron Diaz and Kate Winslet", "Julia Roberts and Meg Ryan", "Sandra Bullock and Anne Hathaway", "Reese Witherspoon and Nicole Kidman"], correct: 0 },
+      { category: "Movies", question: "What is the highest-grossing Christmas movie of all time (as of 2023)?", answers: ["Home Alone", "The Grinch (2018)", "Elf", "The Polar Express"], correct: 1 },
+      { category: "Movies", question: "In 'Klaus', where is Jesper sent as a postman?", answers: ["Smeerensburg", "North Pole", "Finland", "Iceland"], correct: 0 },
+      { category: "Movies", question: "What 1988 movie is often debated as a Christmas film?", answers: ["Die Hard", "Lethal Weapon", "Batman Returns", "Rocky IV"], correct: 0 },
+      { category: "Movies", question: "In 'The Muppet Christmas Carol', who plays Ebenezer Scrooge?", answers: ["Michael Caine", "Tim Curry", "Patrick Stewart", "George C. Scott"], correct: 0 },
+      { category: "Movies", question: "What animated Christmas special first aired in 1964 featuring Rudolph?", answers: ["Rudolph the Red-Nosed Reindeer", "Frosty the Snowman", "Santa Claus Is Comin' to Town", "The Year Without a Santa Claus"], correct: 0 },
+      { category: "Movies", question: "In 'White Christmas', what type of establishment do the main characters try to save?", answers: ["A Vermont inn", "A New York theater", "A California farm", "A Chicago restaurant"], correct: 0 },
+      { category: "Movies", question: "What does George Bailey's daughter Zuzu give him in 'It's a Wonderful Life'?", answers: ["Rose petals", "A drawing", "A cookie", "A scarf"], correct: 0 },
+      { category: "Movies", question: "In 'Fred Claus', who plays Santa's brother Fred?", answers: ["Vince Vaughn", "Owen Wilson", "Ben Stiller", "Will Ferrell"], correct: 0 },
+      { category: "Movies", question: "What 2003 film features Will Ferrell as a human raised by elves?", answers: ["Elf", "The Santa Clause 2", "Bad Santa", "Surviving Christmas"], correct: 0 },
+      { category: "Movies", question: "In 'Krampus', what creature punishes naughty children?", answers: ["A demonic goat-like creature", "An evil elf", "A dark Santa", "A witch"], correct: 0 },
+      { category: "Movies", question: "What is the first name of Scrooge in 'A Christmas Carol'?", answers: ["Ebenezer", "Edward", "Edmund", "Ernest"], correct: 0 },
+      { category: "Movies", question: "In 'The Year Without a Santa Claus', what are the names of the Miser Brothers?", answers: ["Heat Miser and Snow Miser", "Fire Miser and Ice Miser", "Hot Miser and Cold Miser", "Summer Miser and Winter Miser"], correct: 0 },
+      { category: "Movies", question: "What Christmas movie features a man trying to skip Christmas?", answers: ["Christmas with the Kranks", "Deck the Halls", "Four Christmases", "The Family Stone"], correct: 0 },
+      { category: "Movies", question: "In 'Arthur Christmas', what is Arthur's position at the North Pole?", answers: ["Letter opener", "Elf manager", "Sleigh driver", "Toy maker"], correct: 0 },
+      { category: "Movies", question: "What does the Ghost of Christmas Present show Scrooge?", answers: ["The Cratchit family dinner", "His own grave", "His childhood", "His fiancée"], correct: 0 },
+      { category: "Movies", question: "In 'Bad Santa', Billy Bob Thornton plays a criminal who poses as what?", answers: ["A mall Santa", "A Christmas tree salesman", "An elf", "A caroler"], correct: 0 },
+      { category: "Movies", question: "What Christmas film features the song 'Where Are You Christmas'?", answers: ["How the Grinch Stole Christmas (2000)", "The Polar Express", "Elf", "Home Alone"], correct: 0 },
+      { category: "Movies", question: "In 'The Ref', Denis Leary plays what type of criminal?", answers: ["A cat burglar", "A bank robber", "A con artist", "A kidnapper"], correct: 0 },
+      { category: "Movies", question: "What studio produced 'The Nightmare Before Christmas'?", answers: ["Disney/Touchstone", "Warner Bros", "Universal", "Paramount"], correct: 0 },
+      { category: "Movies", question: "In 'Surviving Christmas', Ben Affleck pays a family to do what?", answers: ["Pretend to be his family", "Decorate his house", "Cook him dinner", "Sing carols"], correct: 0 },
+      { category: "Movies", question: "What Christmas movie is set during a hostage situation in Los Angeles?", answers: ["Die Hard", "Lethal Weapon", "The Long Kiss Goodnight", "Kiss Kiss Bang Bang"], correct: 0 },
+      { category: "Movies", question: "In 'Deck the Halls', neighbors compete over what?", answers: ["Christmas lights", "Lawn decorations", "Baking", "Caroling"], correct: 0 },
+      { category: "Movies", question: "What animated film tells the story of how Santa's father started Christmas?", answers: ["Arthur Christmas", "The Christmas Chronicles", "Klaus", "Rise of the Guardians"], correct: 2 },
+      { category: "Movies", question: "In 'Four Christmases', how many Christmas celebrations must the couple attend?", answers: ["Four", "Three", "Five", "Six"], correct: 0 },
+      { category: "Movies", question: "What year was the original 'Miracle on 34th Street' released?", answers: ["1947", "1952", "1944", "1950"], correct: 0 },
+      { category: "Movies", question: "In 'Office Christmas Party', who plays the CEO trying to cancel the party?", answers: ["Jennifer Aniston", "Kate McKinnon", "Tiffany Haddish", "Melissa McCarthy"], correct: 0 },
+      { category: "Movies", question: "What British film follows multiple love stories during Christmas?", answers: ["Love Actually", "The Holiday", "Bridget Jones's Diary", "About Time"], correct: 0 },
+      { category: "Movies", question: "In 'The Christmas Chronicles', who plays Santa Claus?", answers: ["Kurt Russell", "Mel Gibson", "Jeff Bridges", "Dennis Quaid"], correct: 0 },
+      { category: "Movies", question: "What is the name of Buddy's biological father in 'Elf'?", answers: ["Walter Hobbs", "Walter Smith", "William Hobbs", "William Smith"], correct: 0 },
+      { category: "Movies", question: "In 'A Christmas Prince', what fictional country is the movie set in?", answers: ["Aldovia", "Belgravia", "Genovia", "Cordinia"], correct: 0 },
+      
+      // === TV SHOWS (45 questions) ===
+      { category: "TV Shows", question: "In 'Friends', what holiday armadillo does Ross dress up as?", answers: ["The Holiday Armadillo", "The Christmas Armadillo", "Santa's Helper", "The Hanukkah Armadillo"], correct: 0 },
+      { category: "TV Shows", question: "What sitcom features a Festivus celebration with an aluminum pole?", answers: ["Seinfeld", "Friends", "The Office", "How I Met Your Mother"], correct: 0 },
+      { category: "TV Shows", question: "In 'The Office', who is the Secret Santa gift giver of the infamous teapot?", answers: ["Jim", "Dwight", "Michael", "Andy"], correct: 0 },
+      { category: "TV Shows", question: "What animated show features 'The Spirit of Christmas' as its pilot?", answers: ["South Park", "Family Guy", "The Simpsons", "American Dad"], correct: 0 },
+      { category: "TV Shows", question: "In 'How I Met Your Mother', what is Barney's Christmas tradition?", answers: ["The Slapsgiving", "The 12 Dates of Christmas", "Suit Up Santa", "Christmas Miracles"], correct: 0 },
+      { category: "TV Shows", question: "What is the name of the Simpsons' annual Christmas episode tradition?", answers: ["Simpsons Roasting on an Open Fire", "Merry Simpsons", "A Simpsons Christmas", "Homer's Holiday"], correct: 0 },
+      { category: "TV Shows", question: "In 'Doctor Who', which Doctor first appeared in a Christmas special?", answers: ["David Tennant (10th)", "Matt Smith (11th)", "Peter Capaldi (12th)", "Christopher Eccleston (9th)"], correct: 0 },
+      { category: "TV Shows", question: "What British comedy features a Christmas special every year since 2005?", answers: ["Doctor Who", "Downton Abbey", "Call the Midwife", "Gavin & Stacey"], correct: 0 },
+      { category: "TV Shows", question: "In 'The Big Bang Theory', what does Sheldon give Penny for Christmas?", answers: ["A napkin signed by Leonard Nimoy", "A Star Trek collectible", "A physics book", "A Flash action figure"], correct: 0 },
+      { category: "TV Shows", question: "What classic TV special features the song 'A Holly Jolly Christmas'?", answers: ["Rudolph the Red-Nosed Reindeer", "Frosty the Snowman", "Santa Claus Is Comin' to Town", "The Little Drummer Boy"], correct: 0 },
+      { category: "TV Shows", question: "In 'Brooklyn Nine-Nine', what is the name of their annual Halloween heist?", answers: ["The Halloween Heist", "The Great Heist", "The Nine-Nine Heist", "Peralta's Heist"], correct: 0 },
+      { category: "TV Shows", question: "What TV show's Christmas episode features 'Christmukkah'?", answers: ["The O.C.", "Gossip Girl", "One Tree Hill", "90210"], correct: 0 },
+      { category: "TV Shows", question: "In 'Parks and Recreation', what holiday does Ron Swanson celebrate?", answers: ["None, he hates holidays", "Christmas", "Festivus", "New Year's only"], correct: 0 },
+      { category: "TV Shows", question: "What animated special features Hermey the elf who wants to be a dentist?", answers: ["Rudolph the Red-Nosed Reindeer", "Santa Claus Is Comin' to Town", "Frosty the Snowman", "The Year Without a Santa Claus"], correct: 0 },
+      { category: "TV Shows", question: "In 'Downton Abbey', what major event happens during the Christmas special?", answers: ["Matthew's death", "The wedding", "Lady Sybil's death", "The war ends"], correct: 0 },
+      { category: "TV Shows", question: "What TV show created the phrase 'Airing of Grievances'?", answers: ["Seinfeld", "Everybody Loves Raymond", "The King of Queens", "Frasier"], correct: 0 },
+      { category: "TV Shows", question: "In 'Community', what is the name of their Christmas claymation episode?", answers: ["Abed's Uncontrollable Christmas", "A Very Greendale Christmas", "Claymation Christmas", "Community Christmas"], correct: 0 },
+      { category: "TV Shows", question: "What classic special features the Bumble, an Abominable Snow Monster?", answers: ["Rudolph the Red-Nosed Reindeer", "Frosty the Snowman", "Santa Claus Is Comin' to Town", "Jack Frost"], correct: 0 },
+      { category: "TV Shows", question: "In 'Black Mirror', which Christmas special stars Jon Hamm?", answers: ["White Christmas", "Black Museum", "Bandersnatch", "San Junipero"], correct: 0 },
+      { category: "TV Shows", question: "What sitcom features the 'Manny Delgado Santa photo' tradition?", answers: ["Modern Family", "The Middle", "Fresh Off the Boat", "Black-ish"], correct: 0 },
+      { category: "TV Shows", question: "In 'Frasier', what gift does Frasier give his father every year?", answers: ["A new recliner", "Theater tickets", "A sweater", "A book"], correct: 1 },
+      { category: "TV Shows", question: "What year did 'A Charlie Brown Christmas' first air?", answers: ["1965", "1960", "1970", "1958"], correct: 0 },
+      { category: "TV Shows", question: "In 'Schitt's Creek', what does David give Patrick for their first Christmas?", answers: ["A framed photo", "A ring", "A guitar", "A watch"], correct: 0 },
+      { category: "TV Shows", question: "What animated special features the song 'Put One Foot in Front of the Other'?", answers: ["Santa Claus Is Comin' to Town", "Rudolph the Red-Nosed Reindeer", "Frosty the Snowman", "The Year Without a Santa Claus"], correct: 0 },
+      { category: "TV Shows", question: "In 'The Crown', which royal Christmas broadcast is dramatized?", answers: ["Queen Elizabeth II's first televised broadcast", "King George VI's wartime broadcast", "Prince Charles's address", "Queen Elizabeth II's 2000 address"], correct: 0 },
+      { category: "TV Shows", question: "What TV show's Christmas special features a 'Scared Straight' parody?", answers: ["Arrested Development", "30 Rock", "Parks and Recreation", "Community"], correct: 0 },
+      { category: "TV Shows", question: "In 'Grey's Anatomy', what major event often happens during Christmas episodes?", answers: ["Major surgeries and disasters", "Weddings", "Character departures", "All of these"], correct: 3 },
+      { category: "TV Shows", question: "What classic special shows how Santa first got his red suit?", answers: ["Santa Claus Is Comin' to Town", "Rudolph the Red-Nosed Reindeer", "The Year Without a Santa Claus", "Frosty Returns"], correct: 0 },
+      { category: "TV Shows", question: "In 'New Girl', what Christmas episode features a 'Candy Cane Lane' mishap?", answers: ["Christmas Eve Eve", "LAXmas", "Santa", "The Gift"], correct: 0 },
+      { category: "TV Shows", question: "What is the name of the snowman in the classic TV special?", answers: ["Frosty", "Snowy", "Jack", "Chilly"], correct: 0 },
+      { category: "TV Shows", question: "In 'The Mandalorian', what is the fan nickname for the holiday special?", answers: ["Life Day Special", "Empire Day Special", "Mando Christmas", "Baby Yoda's First Christmas"], correct: 0 },
+      { category: "TV Shows", question: "What sitcom's Christmas episode features a trifle disaster?", answers: ["Friends", "How I Met Your Mother", "The Office", "Parks and Recreation"], correct: 0 },
+      { category: "TV Shows", question: "In 'Stranger Things', what Christmas song plays during a key Season 1 scene?", answers: ["Should I Stay or Should I Go", "White Christmas", "Jingle Bells", "O Holy Night"], correct: 0 },
+      { category: "TV Shows", question: "What year did 'Frosty the Snowman' TV special first air?", answers: ["1969", "1964", "1974", "1959"], correct: 0 },
+      { category: "TV Shows", question: "In 'Ted Lasso', what tradition does Ted bring to Richmond for Christmas?", answers: ["Giving personalized gifts", "Secret Santa", "Christmas karaoke", "Christmas caroling"], correct: 0 },
+      { category: "TV Shows", question: "What animated series features 'The Simpsons' first regular episode as a Christmas special?", answers: ["The Simpsons", "Family Guy", "South Park", "Futurama"], correct: 0 },
+      { category: "TV Shows", question: "In 'Breaking Bad', what Christmas-related scene is memorable?", answers: ["Walt burning the money", "The pizza on the roof", "Jesse with gifts", "The crawl space scene"], correct: 2 },
+      { category: "TV Shows", question: "What late-night host has an annual Christmas sweater tradition?", answers: ["Jimmy Fallon", "Stephen Colbert", "Jimmy Kimmel", "Conan O'Brien"], correct: 0 },
+      { category: "TV Shows", question: "In 'This Is Us', what major revelation happens during a Christmas episode?", answers: ["Jack's cause of death", "Randall's birth mother", "Kevin's addiction", "Multiple revelations"], correct: 3 },
+      { category: "TV Shows", question: "What British comedy duo created 'Gavin & Stacey' Christmas specials?", answers: ["James Corden and Ruth Jones", "Ricky Gervais and Stephen Merchant", "David Mitchell and Robert Webb", "Matt Lucas and David Walliams"], correct: 0 },
+      { category: "TV Shows", question: "In 'Gilmore Girls', what town event happens every Christmas?", answers: ["The Stars Hollow Festival", "The Firelight Festival", "The Winter Carnival", "The Christmas Parade"], correct: 0 },
+      { category: "TV Shows", question: "What streaming service produced 'Dash & Lily' Christmas series?", answers: ["Netflix", "Amazon Prime", "Hulu", "Disney+"], correct: 0 },
+      { category: "TV Shows", question: "In 'The Marvelous Mrs. Maisel', what venue hosts Midge's Christmas show?", answers: ["The Gaslight", "Carnegie Hall", "Radio City", "The Copa"], correct: 0 },
+      { category: "TV Shows", question: "What SpongeBob episode parodies 'A Christmas Carol'?", answers: ["Christmas Who?", "It's a SpongeBob Christmas!", "The Secret Box", "Goons on the Moon"], correct: 1 },
+      { category: "TV Shows", question: "In 'Peaky Blinders', what often happens during Christmas episodes?", answers: ["Major plot twists", "Character deaths", "Business deals", "Family gatherings"], correct: 0 },
+      
+      // === MUSIC (60 questions) ===
+      { category: "Music", question: "Who wrote and performed 'All I Want for Christmas Is You'?", answers: ["Mariah Carey", "Whitney Houston", "Celine Dion", "Beyoncé"], correct: 0 },
+      { category: "Music", question: "What year was 'White Christmas' first recorded by Bing Crosby?", answers: ["1942", "1947", "1950", "1938"], correct: 0 },
+      { category: "Music", question: "In 'Jingle Bells', what kind of sleigh is mentioned?", answers: ["One-horse open sleigh", "Two-horse closed sleigh", "Reindeer sleigh", "Three-horse sleigh"], correct: 0 },
+      { category: "Music", question: "Who originally performed 'Rockin' Around the Christmas Tree'?", answers: ["Brenda Lee", "Connie Francis", "Patsy Cline", "Peggy Lee"], correct: 0 },
+      { category: "Music", question: "What band performed 'Last Christmas'?", answers: ["Wham!", "Duran Duran", "A-ha", "Tears for Fears"], correct: 0 },
+      { category: "Music", question: "In '12 Days of Christmas', what is given on the 5th day?", answers: ["Five golden rings", "Five french hens", "Five calling birds", "Five geese a-laying"], correct: 0 },
+      { category: "Music", question: "Who sang 'Blue Christmas'?", answers: ["Elvis Presley", "Frank Sinatra", "Dean Martin", "Johnny Cash"], correct: 0 },
+      { category: "Music", question: "What Christmas song mentions 'chestnuts roasting'?", answers: ["The Christmas Song", "Winter Wonderland", "Let It Snow", "White Christmas"], correct: 0 },
+      { category: "Music", question: "Who wrote 'Have Yourself a Merry Little Christmas'?", answers: ["Hugh Martin and Ralph Blane", "Irving Berlin", "Johnny Marks", "Sammy Cahn"], correct: 0 },
+      { category: "Music", question: "What song features the line 'City sidewalks, busy sidewalks'?", answers: ["Silver Bells", "Jingle Bell Rock", "Rockin' Around the Christmas Tree", "White Christmas"], correct: 0 },
+      { category: "Music", question: "In what year was 'Rudolph the Red-Nosed Reindeer' song written?", answers: ["1949", "1939", "1959", "1944"], correct: 0 },
+      { category: "Music", question: "Who performed the original 'Frosty the Snowman' song?", answers: ["Gene Autry", "Bing Crosby", "Frank Sinatra", "Perry Como"], correct: 0 },
+      { category: "Music", question: "What Christmas song was written by Irving Berlin?", answers: ["White Christmas", "Silver Bells", "The Christmas Song", "Winter Wonderland"], correct: 0 },
+      { category: "Music", question: "Who sang 'Santa Baby' originally?", answers: ["Eartha Kitt", "Marilyn Monroe", "Doris Day", "Judy Garland"], correct: 0 },
+      { category: "Music", question: "In 'Jingle Bell Rock', what does the jingle bell beat do?", answers: ["Dancing feet", "Marching feet", "Tapping feet", "Skipping feet"], correct: 0 },
+      { category: "Music", question: "What band recorded 'Do They Know It's Christmas?'?", answers: ["Band Aid", "USA for Africa", "Live Aid", "Christmas Aid"], correct: 0 },
+      { category: "Music", question: "Who wrote 'Let It Snow! Let It Snow! Let It Snow!'?", answers: ["Sammy Cahn and Jule Styne", "Irving Berlin", "Johnny Marks", "Mel Tormé"], correct: 0 },
+      { category: "Music", question: "What song includes the lyric 'I'm dreaming of a white Christmas'?", answers: ["White Christmas", "Winter Wonderland", "Let It Snow", "Silver Bells"], correct: 0 },
+      { category: "Music", question: "Who originally recorded 'It's the Most Wonderful Time of the Year'?", answers: ["Andy Williams", "Perry Como", "Dean Martin", "Nat King Cole"], correct: 0 },
+      { category: "Music", question: "In '12 Days of Christmas', how many lords are leaping?", answers: ["10", "9", "11", "12"], correct: 0 },
+      { category: "Music", question: "What song mentions 'Jack Frost nipping at your nose'?", answers: ["The Christmas Song", "Winter Wonderland", "Let It Snow", "White Christmas"], correct: 0 },
+      { category: "Music", question: "Who sang 'Happy Xmas (War Is Over)'?", answers: ["John Lennon", "Paul McCartney", "George Harrison", "Ringo Starr"], correct: 0 },
+      { category: "Music", question: "What traditional carol begins 'O come, all ye faithful'?", answers: ["Adeste Fideles", "O Holy Night", "Silent Night", "Hark the Herald Angels Sing"], correct: 0 },
+      { category: "Music", question: "Who recorded 'Santa Claus Is Coming to Town' in 1970?", answers: ["The Jackson 5", "The Temptations", "The Supremes", "Stevie Wonder"], correct: 0 },
+      { category: "Music", question: "What country is 'Silent Night' originally from?", answers: ["Austria", "Germany", "Switzerland", "England"], correct: 0 },
+      { category: "Music", question: "Who sang 'Feliz Navidad'?", answers: ["José Feliciano", "Julio Iglesias", "Enrique Iglesias", "Marc Anthony"], correct: 0 },
+      { category: "Music", question: "In 'Winter Wonderland', what is the snowman's name?", answers: ["Parson Brown", "Mr. Snowman", "Frosty", "Jack Frost"], correct: 0 },
+      { category: "Music", question: "What year was 'Silent Night' first performed?", answers: ["1818", "1850", "1800", "1835"], correct: 0 },
+      { category: "Music", question: "Who wrote 'Rudolph the Red-Nosed Reindeer' song?", answers: ["Johnny Marks", "Irving Berlin", "Gene Autry", "Sammy Cahn"], correct: 0 },
+      { category: "Music", question: "What carol features 'Gloria in excelsis Deo'?", answers: ["Angels We Have Heard on High", "O Holy Night", "Hark the Herald Angels Sing", "Joy to the World"], correct: 0 },
+      { category: "Music", question: "Who recorded 'Christmas (Baby Please Come Home)' originally?", answers: ["Darlene Love", "The Ronettes", "The Crystals", "Mariah Carey"], correct: 0 },
+      { category: "Music", question: "In '12 Days of Christmas', what is given on the first day?", answers: ["A partridge in a pear tree", "Two turtle doves", "Three french hens", "A golden ring"], correct: 0 },
+      { category: "Music", question: "What song includes 'simply having a wonderful Christmas time'?", answers: ["Wonderful Christmastime", "Happy Holiday", "It's the Most Wonderful Time", "Christmas Time Is Here"], correct: 0 },
+      { category: "Music", question: "Who wrote 'O Holy Night'?", answers: ["Adolphe Adam", "Franz Gruber", "Isaac Watts", "Charles Wesley"], correct: 0 },
+      { category: "Music", question: "What instrument is Vince Guaraldi known for playing in 'A Charlie Brown Christmas'?", answers: ["Piano", "Guitar", "Saxophone", "Trumpet"], correct: 0 },
+      { category: "Music", question: "Who sang 'Please Come Home for Christmas' (1960)?", answers: ["Charles Brown", "James Brown", "Ray Charles", "Bobby Blue Bland"], correct: 0 },
+      { category: "Music", question: "What carol begins 'Deck the halls with boughs of holly'?", answers: ["Deck the Halls", "The Holly and the Ivy", "O Christmas Tree", "Good King Wenceslas"], correct: 0 },
+      { category: "Music", question: "Who performed 'Little Drummer Boy' with David Bowie?", answers: ["Bing Crosby", "Frank Sinatra", "Dean Martin", "Perry Como"], correct: 0 },
+      { category: "Music", question: "What year was 'All I Want for Christmas Is You' released?", answers: ["1994", "1991", "1996", "1999"], correct: 0 },
+      { category: "Music", question: "In 'Jingle Bells', what is the 'bells on bobtail' referring to?", answers: ["The horse's tail", "The sleigh bells", "Church bells", "Reindeer bells"], correct: 0 },
+      { category: "Music", question: "Who wrote 'Joy to the World'?", answers: ["Isaac Watts", "Charles Wesley", "Martin Luther", "George Handel"], correct: 0 },
+      { category: "Music", question: "What Trans-Siberian Orchestra song is famous for light displays?", answers: ["Wizards in Winter", "Christmas Eve Sarajevo", "Carol of the Bells", "Christmas Canon"], correct: 0 },
+      { category: "Music", question: "Who sang 'I'll Be Home for Christmas' first?", answers: ["Bing Crosby", "Frank Sinatra", "Perry Como", "Nat King Cole"], correct: 0 },
+      { category: "Music", question: "What Pogues song is a famous Christmas duet?", answers: ["Fairytale of New York", "A Rainy Night in Soho", "Dirty Old Town", "The Irish Rover"], correct: 0 },
+      { category: "Music", question: "In what movie did 'White Christmas' first appear?", answers: ["Holiday Inn", "White Christmas", "The Bells of St. Mary's", "Going My Way"], correct: 0 },
+      { category: "Music", question: "Who recorded 'Grandma Got Run Over by a Reindeer'?", answers: ["Elmo & Patsy", "Dr. Elmo", "Ray Stevens", "Weird Al"], correct: 0 },
+      { category: "Music", question: "What year was 'Jingle Bells' written?", answers: ["1857", "1840", "1875", "1890"], correct: 0 },
+      { category: "Music", question: "Who sang 'Merry Christmas Darling'?", answers: ["The Carpenters", "ABBA", "Fleetwood Mac", "The Bee Gees"], correct: 0 },
+      { category: "Music", question: "What traditional carol features 'Good tidings we bring'?", answers: ["We Wish You a Merry Christmas", "Joy to the World", "O Come All Ye Faithful", "Hark the Herald Angels Sing"], correct: 0 },
+      { category: "Music", question: "Who wrote 'Baby, It's Cold Outside'?", answers: ["Frank Loesser", "Irving Berlin", "Cole Porter", "Sammy Cahn"], correct: 0 },
+      { category: "Music", question: "What artist released 'Christmas in Hollis'?", answers: ["Run-DMC", "LL Cool J", "Beastie Boys", "Public Enemy"], correct: 0 },
+      { category: "Music", question: "In '12 Days of Christmas', how many gifts are given in total?", answers: ["364", "78", "144", "12"], correct: 0 },
+      { category: "Music", question: "Who sang 'You're a Mean One, Mr. Grinch'?", answers: ["Thurl Ravenscroft", "Boris Karloff", "Jim Carrey", "Tony the Tiger"], correct: 0 },
+      { category: "Music", question: "What Christmas song mentions 'mistletoe and wine'?", answers: ["Mistletoe and Wine by Cliff Richard", "Jingle Bell Rock", "Holly Jolly Christmas", "Winter Wonderland"], correct: 0 },
+      { category: "Music", question: "Who performed 'Step Into Christmas'?", answers: ["Elton John", "David Bowie", "Rod Stewart", "Freddie Mercury"], correct: 0 },
+      { category: "Music", question: "What carol originates from 'What Child Is This'?", answers: ["Greensleeves", "Silent Night", "O Holy Night", "Away in a Manger"], correct: 0 },
+      { category: "Music", question: "Who sang 'Mary, Did You Know?'?", answers: ["Mark Lowry (writer), Pentatonix (famous version)", "Michael Bublé", "Josh Groban", "Celine Dion"], correct: 0 },
+      { category: "Music", question: "What Bruce Springsteen album features 'Santa Claus Is Comin' to Town'?", answers: ["It was a B-side, not on an album", "Born in the USA", "The River", "Nebraska"], correct: 0 },
+      { category: "Music", question: "Who originally sang 'Sleigh Ride'?", answers: ["The Andrews Sisters", "The Ronettes", "Bing Crosby", "Nat King Cole"], correct: 0 },
+      { category: "Music", question: "What year was 'Last Christmas' by Wham! released?", answers: ["1984", "1982", "1986", "1988"], correct: 0 },
+      
+      // === TRADITIONS (50 questions) ===
+      { category: "Traditions", question: "What plant is traditionally hung for kissing underneath?", answers: ["Mistletoe", "Holly", "Ivy", "Poinsettia"], correct: 0 },
+      { category: "Traditions", question: "In which country did the tradition of Christmas trees originate?", answers: ["Germany", "England", "Norway", "Sweden"], correct: 0 },
+      { category: "Traditions", question: "What is traditionally placed on top of a Christmas tree?", answers: ["Star or angel", "Bell", "Ribbon", "Snowflake"], correct: 0 },
+      { category: "Traditions", question: "What do children traditionally leave out for Santa Claus?", answers: ["Milk and cookies", "Cake and tea", "Bread and cheese", "Juice and crackers"], correct: 0 },
+      { category: "Traditions", question: "In what country is KFC a popular Christmas dinner?", answers: ["Japan", "China", "Korea", "Thailand"], correct: 0 },
+      { category: "Traditions", question: "What is Boxing Day?", answers: ["December 26th, a British holiday", "The day to pack up decorations", "A shopping day before Christmas", "Christmas Eve"], correct: 0 },
+      { category: "Traditions", question: "What flower is associated with Christmas in Mexico?", answers: ["Poinsettia", "Rose", "Lily", "Orchid"], correct: 0 },
+      { category: "Traditions", question: "In what country does Sinterklaas deliver gifts?", answers: ["Netherlands", "Germany", "France", "Belgium"], correct: 0 },
+      { category: "Traditions", question: "What is the traditional Christmas meal in England?", answers: ["Roast turkey with trimmings", "Ham", "Goose", "Beef Wellington"], correct: 0 },
+      { category: "Traditions", question: "What do Australians often do on Christmas Day?", answers: ["Go to the beach", "Build snowmen", "Go skiing", "Stay indoors"], correct: 0 },
+      { category: "Traditions", question: "What is an Advent calendar used for?", answers: ["Counting down to Christmas", "Tracking presents", "Planning meals", "Recording gifts given"], correct: 0 },
+      { category: "Traditions", question: "In what country do children leave shoes out for presents?", answers: ["Netherlands and France", "England", "America", "Australia"], correct: 0 },
+      { category: "Traditions", question: "What is traditionally hidden inside a Christmas pudding?", answers: ["A coin or charm", "A key", "A ring", "A button"], correct: 0 },
+      { category: "Traditions", question: "What does 'Noel' mean?", answers: ["Christmas", "Winter", "Snow", "Gift"], correct: 0 },
+      { category: "Traditions", question: "In Iceland, how many 'Yule Lads' visit children?", answers: ["13", "7", "12", "9"], correct: 0 },
+      { category: "Traditions", question: "What is wassailing?", answers: ["Carol singing for food or money", "Making decorations", "A type of dance", "Cooking tradition"], correct: 0 },
+      { category: "Traditions", question: "What is the traditional Christmas Eve meal in Italy?", answers: ["Feast of Seven Fishes", "Pasta Bolognese", "Pizza", "Lasagna"], correct: 0 },
+      { category: "Traditions", question: "In what country is Christmas celebrated on December 24th primarily?", answers: ["Germany", "USA", "England", "Australia"], correct: 0 },
+      { category: "Traditions", question: "What is a Yule log?", answers: ["A large log burned during Christmas", "A chocolate dessert", "Both are correct", "A type of wreath"], correct: 2 },
+      { category: "Traditions", question: "What color is Santa Claus's suit traditionally?", answers: ["Red and white", "Green and gold", "Blue and silver", "Red and green"], correct: 0 },
+      { category: "Traditions", question: "In what country do people celebrate Christmas by roller skating to church?", answers: ["Venezuela", "Brazil", "Mexico", "Colombia"], correct: 0 },
+      { category: "Traditions", question: "What is the origin of Christmas stockings?", answers: ["Legend of St. Nicholas filling stockings with gold", "Victorian decoration", "Dutch tradition", "American invention"], correct: 0 },
+      { category: "Traditions", question: "What is Krampus?", answers: ["A creature who punishes naughty children", "Santa's helper", "A type of cookie", "A German greeting"], correct: 0 },
+      { category: "Traditions", question: "In what country is La Befana a gift-giver?", answers: ["Italy", "Spain", "France", "Portugal"], correct: 0 },
+      { category: "Traditions", question: "What is the traditional Scandinavian Christmas drink?", answers: ["Glögg (mulled wine)", "Eggnog", "Hot chocolate", "Apple cider"], correct: 0 },
+      { category: "Traditions", question: "What is the significance of holly at Christmas?", answers: ["Represents eternal life and Christ's crown of thorns", "Good luck symbol", "Keeps evil spirits away", "Just decoration"], correct: 0 },
+      { category: "Traditions", question: "In the Philippines, what is the lantern festival called?", answers: ["Giant Lantern Festival", "Festival of Lights", "Christmas Lantern Parade", "Star Festival"], correct: 0 },
+      { category: "Traditions", question: "What is a traditional Christmas cracker?", answers: ["A paper tube that pops when pulled apart", "A type of biscuit", "A firework", "A musical instrument"], correct: 0 },
+      { category: "Traditions", question: "In Sweden, what character delivers presents?", answers: ["Tomte/Jultomten", "Santa Claus", "Father Christmas", "Kris Kringle"], correct: 0 },
+      { category: "Traditions", question: "What is the traditional Christmas spice associated with mulled wine?", answers: ["Cinnamon", "Pepper", "Cumin", "Paprika"], correct: 0 },
+      { category: "Traditions", question: "In what year did Coca-Cola start using Santa in advertisements?", answers: ["1931", "1940", "1920", "1950"], correct: 0 },
+      { category: "Traditions", question: "What is the origin of candy canes?", answers: ["Germany, shaped like shepherd's crooks", "America, invented for decoration", "England, a Victorian treat", "France, as church sweets"], correct: 0 },
+      { category: "Traditions", question: "In Greece, what boat decoration is traditional at Christmas?", answers: ["Model boats decorated with lights", "Anchor ornaments", "Sail wreaths", "Ship trees"], correct: 0 },
+      { category: "Traditions", question: "What is 'Christingle'?", answers: ["A decorated orange representing Christ as light", "A Christmas jingle", "A type of wreath", "A German tradition"], correct: 0 },
+      { category: "Traditions", question: "In what country do people hide their brooms on Christmas Eve?", answers: ["Norway", "Sweden", "Denmark", "Finland"], correct: 0 },
+      { category: "Traditions", question: "What is traditional Ukrainian Christmas tree decoration?", answers: ["Spider webs and spiders", "Stars only", "Candles only", "Fruit"], correct: 0 },
+      { category: "Traditions", question: "What is the traditional gift-giving day in Spain?", answers: ["January 6th (Three Kings Day)", "December 25th", "December 24th", "December 31st"], correct: 0 },
+      { category: "Traditions", question: "In what country is carp the traditional Christmas dinner?", answers: ["Czech Republic and Poland", "France", "Italy", "Germany"], correct: 0 },
+      { category: "Traditions", question: "What is the purpose of a Christmas wreath?", answers: ["Symbol of eternal life, welcoming", "Decoration only", "To keep warm", "Religious requirement"], correct: 0 },
+      { category: "Traditions", question: "What is the traditional drink in the USA during Christmas?", answers: ["Eggnog", "Mulled wine", "Hot toddy", "Champagne"], correct: 0 },
+      { category: "Traditions", question: "In what country is fried chicken a Christmas tradition?", answers: ["Japan", "USA", "UK", "Australia"], correct: 0 },
+      { category: "Traditions", question: "What is the significance of the colors red and green at Christmas?", answers: ["Holly berries (red) and evergreen plants", "Coca-Cola influence", "Random choice", "Victorian fashion"], correct: 0 },
+      { category: "Traditions", question: "What is traditionally eaten on Christmas morning in the USA?", answers: ["Cinnamon rolls or pancakes", "Toast", "Cereal", "Eggs benedict"], correct: 0 },
+      { category: "Traditions", question: "In what country is St. Lucia's Day (December 13) celebrated with candles?", answers: ["Sweden", "Italy", "Spain", "Germany"], correct: 0 },
+      { category: "Traditions", question: "What is the German word for Christmas?", answers: ["Weihnachten", "Navidad", "Noël", "Natale"], correct: 0 },
+      { category: "Traditions", question: "What is a traditional gift for the first day of Christmas in '12 Days'?", answers: ["A partridge in a pear tree", "Five golden rings", "A drumming drummer", "A calling bird"], correct: 0 },
+      { category: "Traditions", question: "In what country do people eat 12 grapes at midnight on New Year's?", answers: ["Spain", "Italy", "Portugal", "France"], correct: 0 },
+      { category: "Traditions", question: "What is the traditional British dessert at Christmas?", answers: ["Christmas pudding", "Fruitcake", "Trifle", "Mince pies"], correct: 0 },
+      { category: "Traditions", question: "What is the Christkind?", answers: ["A gift-bringer in German tradition", "A type of ornament", "Christmas bread", "A carol"], correct: 0 },
+      { category: "Traditions", question: "What day is Epiphany celebrated?", answers: ["January 6th", "December 26th", "January 1st", "December 31st"], correct: 0 },
+      
+      // === FOOD & DRINK (35 questions) ===
+      { category: "Food & Drink", question: "What is the main ingredient in eggnog?", answers: ["Eggs, cream, and sugar", "Milk and honey", "Butter and rum", "Cream and vanilla"], correct: 0 },
+      { category: "Food & Drink", question: "What is a traditional British Christmas dessert?", answers: ["Christmas pudding", "Apple pie", "Cheesecake", "Tiramisu"], correct: 0 },
+      { category: "Food & Drink", question: "What nut is typically associated with Christmas?", answers: ["Chestnut", "Peanut", "Almond", "Walnut"], correct: 0 },
+      { category: "Food & Drink", question: "What is mulled wine?", answers: ["Heated wine with spices", "Cold wine with fruit", "Sparkling wine", "Wine mixed with spirits"], correct: 0 },
+      { category: "Food & Drink", question: "What fruit is traditional in Christmas stockings?", answers: ["Orange", "Apple", "Banana", "Pear"], correct: 0 },
+      { category: "Food & Drink", question: "What is in a traditional mince pie?", answers: ["Mixed dried fruits and spices", "Minced meat", "Cheese", "Chocolate"], correct: 0 },
+      { category: "Food & Drink", question: "What bird is most commonly eaten for Christmas dinner in the USA?", answers: ["Turkey", "Goose", "Chicken", "Duck"], correct: 0 },
+      { category: "Food & Drink", question: "What is panettone?", answers: ["Italian sweet bread", "French pastry", "German cookie", "Spanish cake"], correct: 0 },
+      { category: "Food & Drink", question: "What herb is commonly used in Christmas stuffing?", answers: ["Sage", "Basil", "Oregano", "Cilantro"], correct: 0 },
+      { category: "Food & Drink", question: "What is the traditional shape of a candy cane?", answers: ["J or shepherd's crook", "S-shape", "Spiral", "Straight"], correct: 0 },
+      { category: "Food & Drink", question: "What is gingerbread typically flavored with?", answers: ["Ginger, cinnamon, and molasses", "Vanilla and sugar", "Chocolate and mint", "Lemon and honey"], correct: 0 },
+      { category: "Food & Drink", question: "What sauce is traditional with Christmas pudding?", answers: ["Brandy butter or custard", "Chocolate sauce", "Caramel", "Maple syrup"], correct: 0 },
+      { category: "Food & Drink", question: "What is Stollen?", answers: ["German fruit bread", "Swedish cookie", "Dutch cake", "Austrian pastry"], correct: 0 },
+      { category: "Food & Drink", question: "What drink is left out for Santa with cookies?", answers: ["Milk", "Water", "Juice", "Hot chocolate"], correct: 0 },
+      { category: "Food & Drink", question: "What is the main ingredient in figgy pudding?", answers: ["Figs and dried fruits", "Chocolate", "Pumpkin", "Sweet potato"], correct: 0 },
+      { category: "Food & Drink", question: "What meat is traditionally eaten in the UK for Christmas?", answers: ["Turkey or goose", "Beef", "Pork", "Lamb"], correct: 0 },
+      { category: "Food & Drink", question: "What is a Bûche de Noël?", answers: ["A chocolate log cake", "A French wine", "A type of bread", "A pastry"], correct: 0 },
+      { category: "Food & Drink", question: "What are Brussels sprouts often served with at Christmas?", answers: ["Bacon or chestnuts", "Chocolate", "Honey", "Maple syrup"], correct: 0 },
+      { category: "Food & Drink", question: "What is in a traditional Christmas ham glaze?", answers: ["Brown sugar and mustard", "Ketchup and vinegar", "Mayonnaise", "Soy sauce"], correct: 0 },
+      { category: "Food & Drink", question: "What is wassail traditionally made from?", answers: ["Cider or ale with spices", "Wine only", "Tea", "Coffee"], correct: 0 },
+      { category: "Food & Drink", question: "What cookie is shaped like a person at Christmas?", answers: ["Gingerbread man", "Sugar cookie", "Shortbread", "Snickerdoodle"], correct: 0 },
+      { category: "Food & Drink", question: "What is a popular Christmas breakfast in Scandinavia?", answers: ["Rice porridge", "Pancakes", "Eggs", "Toast"], correct: 0 },
+      { category: "Food & Drink", question: "What is fruitcake mainly made of?", answers: ["Dried fruits and nuts", "Fresh fruits", "Chocolate", "Vegetables"], correct: 0 },
+      { category: "Food & Drink", question: "What is traditionally cooked in the fireplace at Christmas?", answers: ["Chestnuts", "Popcorn", "Marshmallows", "Hot dogs"], correct: 0 },
+      { category: "Food & Drink", question: "What vegetable is often served candied at Christmas?", answers: ["Sweet potatoes/yams", "Carrots", "Beets", "Parsnips"], correct: 0 },
+      { category: "Food & Drink", question: "What is the main flavor of peppermint bark?", answers: ["Peppermint and chocolate", "Vanilla", "Caramel", "Cinnamon"], correct: 0 },
+      { category: "Food & Drink", question: "What is added to eggnog for adults?", answers: ["Rum, bourbon, or brandy", "Vodka only", "Tequila", "Gin"], correct: 0 },
+      { category: "Food & Drink", question: "What is a Pfeffernüsse?", answers: ["German spiced cookie", "Swedish bread", "Dutch pastry", "Austrian candy"], correct: 0 },
+      { category: "Food & Drink", question: "What type of pie is traditional at American Christmas?", answers: ["Pumpkin or pecan", "Cherry", "Blueberry", "Lemon"], correct: 0 },
+      { category: "Food & Drink", question: "What is cranberry sauce typically served with?", answers: ["Turkey", "Ham", "Beef", "Fish"], correct: 0 },
+      { category: "Food & Drink", question: "What is a traditional Polish Christmas Eve dish?", answers: ["Pierogi", "Kielbasa", "Bigos", "Goulash"], correct: 0 },
+      { category: "Food & Drink", question: "What is hot buttered rum made with?", answers: ["Rum, butter, and spices", "Vodka and cream", "Whiskey and honey", "Tequila and lime"], correct: 0 },
+      { category: "Food & Drink", question: "What is the Swedish julbord?", answers: ["A Christmas smorgasbord/buffet", "A dessert", "A drink", "A decoration"], correct: 0 },
+      { category: "Food & Drink", question: "What flavor is traditional Christmas candy rock?", answers: ["Peppermint", "Cherry", "Grape", "Orange"], correct: 0 },
+      { category: "Food & Drink", question: "What is lebkuchen?", answers: ["German gingerbread", "French pastry", "Italian bread", "British biscuit"], correct: 0 }
+    ];
+
+    // ========================================
+    // GAME STATE
+    // ========================================
+    let gameState = {
+      mode: null, // 'host' or 'controller'
+      phase: 'menu', // 'menu', 'lobby', 'playing', 'results', 'final'
+      roomCode: null,
+      playerName: null,
+      players: {}, // { odId: { name, score, currentAnswer, answerTime } }
+      currentQuestion: null,
+      questionIndex: 0,
+      selectedQuestions: [],
+      timeLeft: 20,
+      timerInterval: null,
+      showingResults: false,
+      peer: null,
+      connections: {}, // For host: { peerId: connection }
+      hostConnection: null, // For controller: connection to host
+    };
+
+    // ========================================
+    // PEER CONNECTION MANAGEMENT
+    // ========================================
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 4; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return code;
+    }
+
+    function initializeHost() {
+      const roomCode = generateRoomCode();
+      gameState.roomCode = roomCode;
+      gameState.mode = 'host';
+      
+      // Create peer with room code as ID prefix
+      const peerId = `xmas-trivia-${roomCode}`;
+      gameState.peer = new Peer(peerId, {
+        debug: 1
+      });
+
+      gameState.peer.on('open', (id) => {
+        console.log('Host peer opened with ID:', id);
+        gameState.phase = 'lobby';
+        render();
+        generateQRCode();
+      });
+
+      gameState.peer.on('connection', (conn) => {
+        console.log('New connection from:', conn.peer);
+        
+        conn.on('open', () => {
+          console.log('Connection opened');
+        });
+
+        conn.on('data', (data) => {
+          handleHostMessage(conn, data);
+        });
+
+        conn.on('close', () => {
+          // Remove player
+          const playerId = conn.peer;
+          if (gameState.players[playerId]) {
+            delete gameState.players[playerId];
+            delete gameState.connections[playerId];
+            broadcastToPlayers({ type: 'playerList', players: getPlayerList() });
+            render();
+          }
+        });
+      });
+
+      gameState.peer.on('error', (err) => {
+        console.error('Peer error:', err);
+        if (err.type === 'unavailable-id') {
+          // Room code taken, generate new one
+          gameState.peer.destroy();
+          initializeHost();
+        }
+      });
+    }
+
+    function initializeController(roomCode, playerName) {
+      gameState.mode = 'controller';
+      gameState.roomCode = roomCode.toUpperCase();
+      gameState.playerName = playerName;
+
+      gameState.peer = new Peer({
+        debug: 1
+      });
+
+      gameState.peer.on('open', (id) => {
+        console.log('Controller peer opened:', id);
+        
+        const hostId = `xmas-trivia-${gameState.roomCode}`;
+        const conn = gameState.peer.connect(hostId, { reliable: true });
+        gameState.hostConnection = conn;
+
+        conn.on('open', () => {
+          console.log('Connected to host');
+          conn.send({ type: 'join', name: playerName });
+          showConnectionStatus('connected', 'Connected');
+        });
+
+        conn.on('data', (data) => {
+          handleControllerMessage(data);
+        });
+
+        conn.on('close', () => {
+          showConnectionStatus('disconnected', 'Disconnected');
+          gameState.phase = 'menu';
+          render();
+        });
+
+        conn.on('error', (err) => {
+          console.error('Connection error:', err);
+          showConnectionStatus('disconnected', 'Connection failed');
+        });
+      });
+
+      gameState.peer.on('error', (err) => {
+        console.error('Peer error:', err);
+        showConnectionStatus('disconnected', 'Connection failed');
+      });
+
+      showConnectionStatus('connecting', 'Connecting...');
+    }
+
+    function handleHostMessage(conn, data) {
+      const playerId = conn.peer;
+      
+      switch (data.type) {
+        case 'join':
+          if (Object.keys(gameState.players).length < 10) {
+            gameState.players[playerId] = {
+              name: data.name,
+              score: 0,
+              currentAnswer: null,
+              answerTime: null
+            };
+            gameState.connections[playerId] = conn;
+            
+            // Send confirmation and player list
+            conn.send({ type: 'joined', success: true });
+            broadcastToPlayers({ type: 'playerList', players: getPlayerList() });
+            render();
+          } else {
+            conn.send({ type: 'joined', success: false, reason: 'Game is full' });
+          }
+          break;
+          
+        case 'answer':
+          if (gameState.phase === 'playing' && !gameState.showingResults) {
+            const player = gameState.players[playerId];
+            if (player && player.currentAnswer === null) {
+              player.currentAnswer = data.answer;
+              player.answerTime = data.time;
+              
+              // Check if all players answered
+              const allAnswered = Object.values(gameState.players).every(p => p.currentAnswer !== null);
+              if (allAnswered) {
+                showResults();
+              }
+              
+              render();
+            }
+          }
+          break;
+      }
+    }
+
+    function handleControllerMessage(data) {
+      switch (data.type) {
+        case 'joined':
+          if (data.success) {
+            gameState.phase = 'lobby';
+          } else {
+            alert(data.reason || 'Failed to join game');
+            gameState.phase = 'menu';
+          }
+          render();
+          break;
+          
+        case 'playerList':
+          // Update local player list for display
+          render();
+          break;
+          
+        case 'gameStart':
+          gameState.phase = 'playing';
+          gameState.questionIndex = 0;
+          render();
+          break;
+          
+        case 'question':
+          gameState.currentQuestion = data.question;
+          gameState.questionIndex = data.index;
+          gameState.timeLeft = data.timeLeft;
+          gameState.showingResults = false;
+          gameState.currentAnswer = null;
+          render();
+          break;
+          
+        case 'timeUpdate':
+          gameState.timeLeft = data.timeLeft;
+          render();
+          break;
+          
+        case 'results':
+          gameState.showingResults = true;
+          gameState.resultsData = data;
+          render();
+          break;
+          
+        case 'finalResults':
+          gameState.phase = 'final';
+          gameState.finalScores = data.scores;
+          render();
+          break;
+          
+        case 'gameReset':
+          gameState.phase = 'lobby';
+          gameState.currentAnswer = null;
+          gameState.showingResults = false;
+          render();
+          break;
+      }
+    }
+
+    function broadcastToPlayers(message) {
+      Object.values(gameState.connections).forEach(conn => {
+        if (conn.open) {
+          conn.send(message);
+        }
+      });
+    }
+
+    function getPlayerList() {
+      return Object.entries(gameState.players).map(([id, player]) => ({
+        id,
+        name: player.name,
+        score: player.score
+      }));
+    }
+
+    // ========================================
+    // GAME LOGIC
+    // ========================================
+    function selectQuestions() {
+      const shuffled = [...QUESTIONS].sort(() => Math.random() - 0.5);
+      gameState.selectedQuestions = shuffled.slice(0, 10);
+    }
+
+    function startGame() {
+      if (Object.keys(gameState.players).length === 0) {
+        alert('Need at least 1 player to start!');
+        return;
+      }
+      
+      selectQuestions();
+      gameState.phase = 'playing';
+      gameState.questionIndex = 0;
+      
+      broadcastToPlayers({ type: 'gameStart' });
+      
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const question = gameState.selectedQuestions[gameState.questionIndex];
+      gameState.currentQuestion = question;
+      gameState.timeLeft = 20;
+      gameState.showingResults = false;
+      
+      // Reset player answers
+      Object.values(gameState.players).forEach(p => {
+        p.currentAnswer = null;
+        p.answerTime = null;
+      });
+      
+      // Send question to players
+      broadcastToPlayers({
+        type: 'question',
+        question: {
+          category: question.category,
+          question: question.question,
+          answers: question.answers
+        },
+        index: gameState.questionIndex,
+        timeLeft: gameState.timeLeft
+      });
+      
+      render();
+      startTimer();
+    }
+
+    function startTimer() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      
+      gameState.timerInterval = setInterval(() => {
+        gameState.timeLeft--;
+        
+        broadcastToPlayers({ type: 'timeUpdate', timeLeft: gameState.timeLeft });
+        
+        if (gameState.timeLeft <= 0) {
+          showResults();
+        }
+        
+        render();
+      }, 1000);
+    }
+
+    function showResults() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = null;
+      }
+      
+      gameState.showingResults = true;
+      
+      const question = gameState.currentQuestion;
+      const correctAnswer = question.correct;
+      
+      // Calculate scores
+      const results = [];
+      Object.entries(gameState.players).forEach(([id, player]) => {
+        if (player.currentAnswer === correctAnswer) {
+          // Base points + speed bonus
+          const speedBonus = Math.floor((player.answerTime / 20000) * 500);
+          const points = 1000 + speedBonus;
+          player.score += points;
+          results.push({ name: player.name, correct: true, points });
+        } else {
+          results.push({ name: player.name, correct: false, points: 0 });
+        }
+      });
+      
+      // Send results to players
+      broadcastToPlayers({
+        type: 'results',
+        correctAnswer: correctAnswer,
+        correctAnswerText: question.answers[correctAnswer],
+        results: results,
+        scores: getPlayerList()
+      });
+      
+      render();
+      
+      // Auto-advance after 5 seconds
+      setTimeout(() => {
+        if (gameState.questionIndex < 9) {
+          gameState.questionIndex++;
+          showQuestion();
+        } else {
+          showFinalResults();
+        }
+      }, 5000);
+    }
+
+    function showFinalResults() {
+      gameState.phase = 'final';
+      
+      const scores = getPlayerList().sort((a, b) => b.score - a.score);
+      gameState.finalScores = scores;
+      
+      broadcastToPlayers({
+        type: 'finalResults',
+        scores: scores
+      });
+      
+      render();
+    }
+
+    function resetGame() {
+      // Reset scores
+      Object.values(gameState.players).forEach(p => {
+        p.score = 0;
+        p.currentAnswer = null;
+        p.answerTime = null;
+      });
+      
+      gameState.phase = 'lobby';
+      gameState.questionIndex = 0;
+      gameState.currentQuestion = null;
+      gameState.showingResults = false;
+      
+      broadcastToPlayers({ type: 'gameReset' });
+      
+      render();
+    }
+
+    function submitAnswer(answerIndex) {
+      if (gameState.currentAnswer !== null) return;
+      
+      gameState.currentAnswer = answerIndex;
+      const timeRemaining = gameState.timeLeft * 1000;
+      
+      gameState.hostConnection.send({
+        type: 'answer',
+        answer: answerIndex,
+        time: timeRemaining
+      });
+      
+      render();
+    }
+
+    // ========================================
+    // UI RENDERING
+    // ========================================
+    function render() {
+      const content = document.getElementById('content');
+      
+      switch (gameState.phase) {
+        case 'menu':
+          content.innerHTML = renderMenu();
+          break;
+        case 'lobby':
+          content.innerHTML = gameState.mode === 'host' ? renderHostLobby() : renderControllerLobby();
+          break;
+        case 'playing':
+          content.innerHTML = gameState.mode === 'host' ? renderHostGame() : renderControllerGame();
+          break;
+        case 'final':
+          content.innerHTML = gameState.mode === 'host' ? renderFinalResults() : renderControllerFinal();
+          break;
+      }
+      
+      attachEventListeners();
+    }
+
+    function renderMenu() {
+      return `
+        <div class="screen">
+          <h1>🎄 Christmas Trivia 🎄</h1>
+          <p class="subtitle">A festive party game for friends and family</p>
+          
+          <div class="mode-buttons">
+            <div class="mode-btn" data-action="host">
+              <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+              <span>Host Game</span>
+              <small>Display on TV/Computer</small>
+            </div>
+            
+            <div class="mode-btn" data-action="join">
+              <svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/></svg>
+              <span>Join Game</span>
+              <small>Use phone as controller</small>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHostLobby() {
+      const players = Object.values(gameState.players);
+      const playerCount = players.length;
+      const joinUrl = window.location.href.split('?')[0];
+      
+      return `
+        <div class="screen">
+          <h2>🎅 Game Lobby</h2>
+          
+          <div class="lobby-container">
+            <div class="card join-info">
+              <h3>Join the Game!</h3>
+              <p>Scan the QR code or enter the code:</p>
+              <div class="room-code">${gameState.roomCode}</div>
+              <div class="qr-container">
+                <canvas id="qr-code"></canvas>
+              </div>
+              <p class="join-url">${joinUrl}</p>
+            </div>
+            
+            <div class="card players-section">
+              <h3>🎮 Players (${playerCount}/10)</h3>
+              <div class="players-list">
+                ${playerCount === 0 ? 
+                  '<p class="waiting-text">Waiting for players to join...</p>' :
+                  players.map((p, i) => `
+                    <div class="player-item">
+                      <div class="player-avatar" style="background: hsl(${(i * 36) % 360}, 70%, 50%)">${p.name[0].toUpperCase()}</div>
+                      <span class="player-name">${escapeHtml(p.name)}</span>
+                    </div>
+                  `).join('')
+                }
+              </div>
+              
+              <div class="start-section">
+                <p class="player-count">${playerCount} player${playerCount !== 1 ? 's' : ''} ready</p>
+                <button class="btn btn-accent btn-large" data-action="start" ${playerCount === 0 ? 'disabled' : ''}>
+                  Start Game
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderControllerLobby() {
+      return `
+        <div class="screen controller-screen">
+          <div class="card text-center">
+            <h2>✅ You're In!</h2>
+            <p class="mt-20">Welcome, <strong>${escapeHtml(gameState.playerName)}</strong>!</p>
+            <p class="mt-20">Room: <strong>${gameState.roomCode}</strong></p>
+            
+            <div class="waiting-for-question mt-20">
+              <div class="spinner"></div>
+              <p>Waiting for host to start the game...</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHostGame() {
+      const question = gameState.currentQuestion;
+      if (!question) return '<div class="screen"><p>Loading...</p></div>';
+      
+      const letters = ['A', 'B', 'C', 'D'];
+      const answeredCount = Object.values(gameState.players).filter(p => p.currentAnswer !== null).length;
+      const totalPlayers = Object.keys(gameState.players).length;
+      
+      return `
+        <div class="screen">
+          <div class="game-header">
+            <span class="question-counter">Question ${gameState.questionIndex + 1} / 10</span>
+            <span class="category-badge">${question.category}</span>
+            <div class="timer ${gameState.timeLeft <= 5 ? 'warning' : ''}">${gameState.timeLeft}</div>
+          </div>
+          
+          <div class="question-container">
+            <h2 class="question-text">${escapeHtml(question.question)}</h2>
+            
+            <div class="answers-grid">
+              ${question.answers.map((answer, i) => `
+                <div class="answer-option ${gameState.showingResults ? (i === question.correct ? 'correct' : 'wrong') : ''}">
+                  <span class="letter">${letters[i]}</span>
+                  <span>${escapeHtml(answer)}</span>
+                </div>
+              `).join('')}
+            </div>
+            
+            ${!gameState.showingResults ? `
+              <p class="mt-20" style="color: var(--color-text-muted)">
+                ${answeredCount} / ${totalPlayers} players answered
+              </p>
+            ` : renderResultsSummary()}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderResultsSummary() {
+      const question = gameState.currentQuestion;
+      const correctPlayers = Object.values(gameState.players)
+        .filter(p => p.currentAnswer === question.correct)
+        .sort((a, b) => (b.answerTime || 0) - (a.answerTime || 0));
+      
+      return `
+        <div class="results-container mt-20">
+          <div class="correct-answer-display">
+            ✓ ${escapeHtml(question.answers[question.correct])}
+          </div>
+          
+          ${correctPlayers.length > 0 ? `
+            <div class="who-got-it">
+              <h3>Got it right:</h3>
+              <div class="correct-players">
+                ${correctPlayers.map(p => `
+                  <span class="correct-player">${escapeHtml(p.name)}</span>
+                `).join('')}
+              </div>
+            </div>
+          ` : '<p style="color: var(--color-text-muted)">No one got it right!</p>'}
+          
+          <div class="leaderboard">
+            <h3>🏆 Leaderboard</h3>
+            <div class="leaderboard-list">
+              ${getPlayerList()
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5)
+                .map((p, i) => `
+                  <div class="leaderboard-item ${i < 3 ? 'top-' + (i + 1) : ''}">
+                    <span class="rank">${i + 1}</span>
+                    <span class="leaderboard-name">${escapeHtml(p.name)}</span>
+                    <span class="leaderboard-score">${p.score.toLocaleString()}</span>
+                  </div>
+                `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderControllerGame() {
+      const question = gameState.currentQuestion;
+      
+      if (!question) {
+        return `
+          <div class="screen controller-screen">
+            <div class="waiting-for-question">
+              <div class="spinner"></div>
+              <p>Waiting for next question...</p>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (gameState.showingResults) {
+        const wasCorrect = gameState.currentAnswer === gameState.resultsData?.correctAnswer;
+        return `
+          <div class="screen controller-screen">
+            <div class="card text-center">
+              <div class="answer-feedback ${wasCorrect ? 'correct' : 'wrong'}">
+                ${wasCorrect ? '🎉 Correct!' : '❌ Wrong!'}
+              </div>
+              <p class="mt-20">The answer was:</p>
+              <p><strong>${escapeHtml(gameState.resultsData?.correctAnswerText || '')}</strong></p>
+              
+              <div class="waiting-for-question mt-20">
+                <p>Next question coming up...</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      const letters = ['A', 'B', 'C', 'D'];
+      const hasAnswered = gameState.currentAnswer !== null;
+      
+      return `
+        <div class="screen controller-screen">
+          <div class="controller-header">
+            <h2>Question ${gameState.questionIndex + 1}</h2>
+            <div class="timer ${gameState.timeLeft <= 5 ? 'warning' : ''}">${gameState.timeLeft}</div>
+          </div>
+          
+          ${hasAnswered ? `
+            <div class="card text-center">
+              <p>✓ Answer submitted!</p>
+              <p class="mt-20" style="color: var(--color-text-muted)">Waiting for other players...</p>
+            </div>
+          ` : `
+            <div class="controller-answers">
+              ${question.answers.map((answer, i) => `
+                <button class="controller-btn ${gameState.currentAnswer === i ? 'selected' : ''}" 
+                        data-action="answer" data-answer="${i}" ${hasAnswered ? 'disabled' : ''}>
+                  <span class="letter">${letters[i]}</span>
+                  <span>${escapeHtml(answer)}</span>
+                </button>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderFinalResults() {
+      const scores = gameState.finalScores || [];
+      const winner = scores[0];
+      
+      return `
+        <div class="screen">
+          <div class="final-results">
+            <h1>🎄 Game Over! 🎄</h1>
+            
+            ${winner ? `
+              <div class="winner-celebration">
+                <div class="trophy">🏆</div>
+                <div class="winner-name">${escapeHtml(winner.name)}</div>
+                <div class="winner-score">${winner.score.toLocaleString()} points</div>
+              </div>
+            ` : ''}
+            
+            <div class="leaderboard" style="max-width: 500px; margin: 0 auto;">
+              <h3>Final Standings</h3>
+              <div class="leaderboard-list">
+                ${scores.map((p, i) => `
+                  <div class="leaderboard-item ${i < 3 ? 'top-' + (i + 1) : ''}">
+                    <span class="rank">${i + 1}</span>
+                    <span class="leaderboard-name">${escapeHtml(p.name)}</span>
+                    <span class="leaderboard-score">${p.score.toLocaleString()}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            
+            <div class="play-again-section">
+              <button class="btn btn-accent btn-large" data-action="playAgain">
+                Play Again
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderControllerFinal() {
+      const scores = gameState.finalScores || [];
+      const myScore = scores.find(s => s.name === gameState.playerName);
+      const myRank = scores.findIndex(s => s.name === gameState.playerName) + 1;
+      
+      return `
+        <div class="screen controller-screen">
+          <div class="card text-center">
+            <h2>🎄 Game Over! 🎄</h2>
+            
+            <div class="mt-20">
+              <p>You finished</p>
+              <div style="font-size: 3rem; color: var(--color-accent);">#${myRank}</div>
+              <p style="font-size: 1.5rem;">${myScore?.score.toLocaleString() || 0} points</p>
+            </div>
+            
+            <p class="mt-20" style="color: var(--color-text-muted)">
+              Look at the main screen for full results!
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderJoinForm() {
+      return `
+        <div class="screen">
+          <h1>🎄 Join Game 🎄</h1>
+          
+          <div class="card">
+            <form class="join-form" id="join-form">
+              <label>
+                Room Code
+                <input type="text" class="input-field" id="room-code" placeholder="XXXX" maxlength="4" autocomplete="off" style="text-transform: uppercase;">
+              </label>
+              
+              <label>
+                Your Name
+                <input type="text" class="input-field" id="player-name" placeholder="Enter your name" maxlength="15" autocomplete="off">
+              </label>
+              
+              <button type="submit" class="btn btn-primary">Join Game</button>
+              <button type="button" class="btn btn-secondary" data-action="back">Back</button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    // ========================================
+    // EVENT HANDLING
+    // ========================================
+    function attachEventListeners() {
+      // Mode buttons
+      document.querySelectorAll('[data-action="host"]').forEach(btn => {
+        btn.addEventListener('click', () => initializeHost());
+      });
+      
+      document.querySelectorAll('[data-action="join"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('content').innerHTML = renderJoinForm();
+          attachEventListeners();
+        });
+      });
+      
+      document.querySelectorAll('[data-action="back"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          gameState.phase = 'menu';
+          render();
+        });
+      });
+      
+      document.querySelectorAll('[data-action="start"]').forEach(btn => {
+        btn.addEventListener('click', startGame);
+      });
+      
+      document.querySelectorAll('[data-action="answer"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const answer = parseInt(e.currentTarget.dataset.answer);
+          submitAnswer(answer);
+        });
+      });
+      
+      document.querySelectorAll('[data-action="playAgain"]').forEach(btn => {
+        btn.addEventListener('click', resetGame);
+      });
+      
+      // Join form
+      const joinForm = document.getElementById('join-form');
+      if (joinForm) {
+        joinForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const roomCode = document.getElementById('room-code').value.trim();
+          const playerName = document.getElementById('player-name').value.trim();
+          
+          if (roomCode.length !== 4) {
+            alert('Please enter a 4-character room code');
+            return;
+          }
+          
+          if (playerName.length < 1) {
+            alert('Please enter your name');
+            return;
+          }
+          
+          initializeController(roomCode, playerName);
+        });
+      }
+      
+      // Generate QR code if needed
+      if (document.getElementById('qr-code')) {
+        generateQRCode();
+      }
+    }
+
+    function generateQRCode() {
+      const canvas = document.getElementById('qr-code');
+      if (!canvas) return;
+      
+      const joinUrl = `${window.location.href.split('?')[0]}?room=${gameState.roomCode}`;
+      
+      QRCode.toCanvas(canvas, joinUrl, {
+        width: 180,
+        margin: 0,
+        color: {
+          dark: '#165B33',
+          light: '#ffffff'
+        }
+      });
+    }
+
+    function showConnectionStatus(status, text) {
+      const el = document.getElementById('connection-status');
+      el.className = `connection-status ${status}`;
+      el.textContent = text;
+      el.classList.remove('hidden');
+      
+      if (status === 'connected') {
+        setTimeout(() => el.classList.add('hidden'), 2000);
+      }
+    }
+
+    // ========================================
+    // DECORATIONS
+    // ========================================
+    function createDecorations() {
+      // Create snowflakes
+      if (THEME.decorations.snowfall) {
+        for (let i = 0; i < THEME.decorations.snowflakeCount; i++) {
+          const snowflake = document.createElement('div');
+          snowflake.className = 'snowflake';
+          snowflake.innerHTML = '❄';
+          snowflake.style.left = `${Math.random() * 100}%`;
+          snowflake.style.fontSize = `${Math.random() * 10 + 8}px`;
+          snowflake.style.animationDuration = `${Math.random() * 10 + 10}s`;
+          snowflake.style.animationDelay = `${Math.random() * 10}s`;
+          snowflake.style.opacity = Math.random() * 0.5 + 0.3;
+          document.getElementById('app').appendChild(snowflake);
+        }
+      }
+      
+      // Create Christmas lights
+      if (THEME.decorations.lights) {
+        const lightsContainer = document.getElementById('lights');
+        for (let i = 0; i < THEME.decorations.lightCount; i++) {
+          const bulb = document.createElement('div');
+          bulb.className = 'light-bulb';
+          lightsContainer.appendChild(bulb);
+        }
+      }
+    }
+
+    // ========================================
+    // UTILITIES
+    // ========================================
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+    function init() {
+      createDecorations();
+      
+      // Check for room code in URL
+      const params = new URLSearchParams(window.location.search);
+      const roomCode = params.get('room');
+      
+      if (roomCode) {
+        document.getElementById('content').innerHTML = renderJoinForm();
+        document.getElementById('room-code').value = roomCode;
+        attachEventListeners();
+        document.getElementById('player-name').focus();
+      } else {
+        render();
+      }
+    }
+
+    // Start the app
+    init();
+  </script>
+</body>
+</html>
